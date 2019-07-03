@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import Slider from "react-native-slider";
 
 import {
-  StyleSheet, Text, View, Alert, Button, ActivityIndicator, Image
+  StyleSheet, Text, View, Alert, Button, ActivityIndicator, Image, AsyncStorage
 // eslint-disable-next-line import/no-unresolved
 } from 'react-native';
 
@@ -15,10 +15,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff6d4',
     alignItems: 'center',
+    padding: 50
   },
   header: {
     alignItems: 'center',
-    margin: 50,
   },
   image: {
     height: 125,
@@ -32,13 +32,33 @@ export default class App extends Component {
     this.state = {
       twilight: undefined,
       loading: true,
+      timeBeforeTwilight: 0,
     };
   }
 
   componentDidMount() {
-    this.onGetTwilight();
+    getData = async () => {
+      try {
+        const asyncState = await AsyncStorage.getItem('CG_state')
+        if(asyncState !== null) {
+          console.log("get data from store", asyncState);
+            const state = JSON.parse(asyncState);
+          this.setState({...state, twilight: new Date(state.twilight), loading: false });
+        } else {
+          this.onGetTwilight();
+        }
+      } catch(e) {
+        Alert.alert(error.message);
+      }
+    }
+    getData();
   }
 
+  /**
+   * On get twilight button pressed, get current location,
+   * fetch new tw from the API for the location
+   * then persist new state to async store.
+   */
   onGetTwilight = () => {
     this.setState({ loading: true });
     navigator.geolocation.getCurrentPosition(
@@ -48,23 +68,23 @@ export default class App extends Component {
           twilight,
           loading: false,
         }));
+        storeData = async () => {
+          try {
+            console.log("saving to store", JSON.stringify(this.state));
+            await AsyncStorage.setItem('CG_state', JSON.stringify(this.state))
+          } catch (e) {
+            Alert.alert(e.message);
+          }
+        }
+        storeData();
       },
       error => Alert.alert(error.message),
-      { enableHighAccuracy: false, timeout: 20000, maximumAge: 100000 },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 100000 }, 
     );
   }
-
-  getLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      position => position,
-      error => Alert.alert(error.message),
-      { enableHighAccuracy: false, timeout: 20000, maximumAge: 100000 },
-    );
-  }
-
 
   render() {
-    const { loading, twilight } = this.state;
+    const { loading, twilight, timeBeforeTwilight } = this.state;
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -80,22 +100,24 @@ export default class App extends Component {
             <ActivityIndicator size="large" color="#0000ff" />
           ) : (
             <>
+              <Text style={{fontSize: 20, marginBottom: 20}}>{`Today's twilight is ${twilight.getUTCHours()}:${twilight.getUTCMinutes()}`}</Text>
               <Button
                 onPress={this.onGetTwilight}
                 title="Reload twilight"
                 color="#841584"
                 accessibilityLabel="Reload the twilight hour"
               />
-              <Text style={{fontSize: 20, marginTop: 20}}>{`Today's twilight is ${twilight.getUTCHours()}:${twilight.getUTCMinutes()}`}</Text>
             </>
           )}
           <Slider
-            style={{width: 150}}
-            value={15}
+            style={{width: "100%"}}
+            value={timeBeforeTwilight}
             minimumValue={0}
             maximumValue={90}
-            onValueChange={value => console.log(value)}
+            step={15}
+            onValueChange={value => this.setState({timeBeforeTwilight: value})}
           />
+          <Text>{`${timeBeforeTwilight} min.`}</Text>
         </>
       </View>
     );
