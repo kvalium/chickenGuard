@@ -1,5 +1,5 @@
-/* eslint-disable react/jsx-filename-extension */
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import {
   Text, View, Button, ActivityIndicator, Image,
@@ -7,14 +7,19 @@ import {
 
 import Slider from 'react-native-slider';
 
-import styles from './styles';
+import { styles } from './styles';
 
-export default function ChickenGuard({ 
-  loading, 
-  twilight, 
-  onGetTwilight, 
-  timeBeforeTwilight, 
-  setTimeBeforeTwilight
+/**
+ * Chicken Guard main screen.
+ *
+ * @param {*} props see proptypes validation.
+ */
+export default function ChickenGuard({
+  loading,
+  twilight,
+  onGetTwilight,
+  timeBeforeTwilight,
+  setTimeBeforeTwilight,
 }) {
   return (
     <View style={styles.container}>
@@ -54,3 +59,15 @@ export default function ChickenGuard({
     </View>
   );
 }
+
+ChickenGuard.propTypes = {
+  loading: PropTypes.bool.isRequired,
+  twilight: PropTypes.instanceOf(Date),
+  onGetTwilight: PropTypes.func.isRequired,
+  timeBeforeTwilight: PropTypes.number.isRequired,
+  setTimeBeforeTwilight: PropTypes.func.isRequired,
+};
+
+ChickenGuard.defaultProps = {
+  twilight: undefined,
+};
