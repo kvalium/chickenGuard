@@ -8,6 +8,6 @@ const sunsetApi = 'https://api.sunrise-sunset.org/json?formatted=0&';
  *
  * @returns ISO 8601 date string
  */
-export const getTwilight = (lat, long) => fetch(`${sunsetApi}lat=${lat}&lng=${long}`).then(d => d.json());
+export const getTwilight = (lat, long) => fetch(`${sunsetApi}lat=${lat}&lng=${long}`).then(d => d.json()).then(({ results }) => new Date(results.astronomical_twilight_end));
 
 export default getTwilight;

@@ -1,56 +1,94 @@
 /* eslint-disable react/jsx-filename-extension */
-import React, { useState } from 'react';
+import React, { Component } from 'react';
 import {
-  StyleSheet, Text, View, Alert, Button,
+  StyleSheet, Text, View, Alert, Button, ActivityIndicator, Image
 // eslint-disable-next-line import/no-unresolved
 } from 'react-native';
 
 import { getTwilight } from './services';
 
-export default function App() {
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff6d4',
+    alignItems: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    margin: 50,
+  },
+  image: {
+    height: 125,
+    width: 100,
+  }
+});
 
-  const [location, setLocation] = useState();
-  const [twilight, setTwilight] = useState();
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      twilight: undefined,
+      loading: true,
+    };
+  }
 
-  const onGetTwilight = () => {
-    const { latitude, longitude } = location;
-    Alert.alert(JSON.stringify(getTwilight(latitude, longitude)));
-    getTwilight(latitude, longitude).then(setTwilight);
-  };
+  componentDidMount() {
+    this.onGetTwilight();
+  }
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      setLocation(position.coords);
-    },
-    error => Alert.alert(error.message),
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 100000 },
-  );
+  onGetTwilight = () => {
+    this.setState({ loading: true });
+    navigator.geolocation.getCurrentPosition(
+      ({coords}) => {
+        const { latitude, longitude } = coords;
+        getTwilight(latitude, longitude).then(twilight => this.setState({
+          twilight,
+          loading: false,
+        }));
+      },
+      error => Alert.alert(error.message),
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 100000 },
+    );
+  }
 
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app !</Text>
-      {location && (
-        <>
-          <Button
-            onPress={onGetTwilight}
-            title="Learn More"
-            color="#841584"
-            accessibilityLabel="Learn more about this purple button"
+  getLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      position => position,
+      error => Alert.alert(error.message),
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 100000 },
+    );
+  }
+
+
+  render() {
+    const { loading, twilight } = this.state;
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Image
+            resizeMode="cover"
+            style={styles.image}
+            source={require('./assets/chicken.png')}
           />
-          <Text>{location.latitude}</Text>
-          <Text>{location.longitude}</Text>
-          <Text>{twilight}</Text>
-        </>
-      )}
+          <Text style={{fontSize: 35}}>Chicken Guard</Text>
+        </View>
+        <>
+          {loading ? (
+            <ActivityIndicator size="large" color="#0000ff" />
+          ) : (
+            <>
+              <Button
+                onPress={this.onGetTwilight}
+                title="Reload twilight"
+                color="#841584"
+                accessibilityLabel="Reload the twilight hour"
+              />
+              <Text style={{fontSize: 20, marginTop: 20}}>{`Today's twilight is ${twilight.getUTCHours()}:${twilight.getUTCMinutes()}`}</Text>
+            </>
+          )}
 
-    </View>
-  );
+        </>
+      </View>
+    );
+  }
 }
