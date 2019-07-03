@@ -1,5 +1,8 @@
 /* eslint-disable react/jsx-filename-extension */
 import React, { Component } from 'react';
+
+import Slider from "react-native-slider";
+
 import {
   StyleSheet, Text, View, Alert, Button, ActivityIndicator, Image
 // eslint-disable-next-line import/no-unresolved
@@ -86,7 +89,13 @@ export default class App extends Component {
               <Text style={{fontSize: 20, marginTop: 20}}>{`Today's twilight is ${twilight.getUTCHours()}:${twilight.getUTCMinutes()}`}</Text>
             </>
           )}
-
+          <Slider
+            style={{width: 150}}
+            value={15}
+            minimumValue={0}
+            maximumValue={90}
+            onValueChange={value => console.log(value)}
+          />
         </>
       </View>
     );
