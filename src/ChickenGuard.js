@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-filename-extension */
 import React from 'react';
 
 import {
@@ -6,7 +7,7 @@ import {
 
 import Slider from 'react-native-slider';
 
-import styles from '../styles';
+import styles from './styles';
 
 export default function ChickenGuard({ 
   loading, 
@@ -22,7 +23,7 @@ export default function ChickenGuard({
           resizeMode="cover"
           style={styles.image}
           // eslint-disable-next-line global-require
-          source={require('../../assets/chicken.png')}
+          source={require('../assets/chicken.png')}
         />
         <Text style={{ fontSize: 35 }}>Chicken Guard</Text>
       </View>
