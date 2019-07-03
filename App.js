@@ -1,30 +1,14 @@
 /* eslint-disable react/jsx-filename-extension */
 import React, { Component } from 'react';
 
-import Slider from "react-native-slider";
+import Slider from 'react-native-slider';
 
-import {
-  StyleSheet, Text, View, Alert, Button, ActivityIndicator, Image, AsyncStorage
-// eslint-disable-next-line import/no-unresolved
-} from 'react-native';
+import { Text, View, Alert, Button, ActivityIndicator, Image } from 'react-native';
 
-import { getTwilight } from './services';
+import { Notifications } from 'expo';
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff6d4',
-    alignItems: 'center',
-    padding: 50
-  },
-  header: {
-    alignItems: 'center',
-  },
-  image: {
-    height: 125,
-    width: 100,
-  }
-});
+import { getTwilight, getAsyncData, getPosition, setAsyncData } from './src/services';
+import styles from "./src/styles";;
 
 export default class App extends Component {
   constructor(props) {
@@ -37,21 +21,9 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    getData = async () => {
-      try {
-        const asyncState = await AsyncStorage.getItem('CG_state')
-        if(asyncState !== null) {
-          console.log("get data from store", asyncState);
-            const state = JSON.parse(asyncState);
-          this.setState({...state, twilight: new Date(state.twilight), loading: false });
-        } else {
-          this.onGetTwilight();
-        }
-      } catch(e) {
-        Alert.alert(error.message);
-      }
-    }
-    getData();
+    getAsyncData()
+      .then(asyncState => (asyncState ? this.setState(asyncState) : this.onGetTwilight()))
+      .catch(e => Alert.alert(e.message));
   }
 
   /**
@@ -61,27 +33,17 @@ export default class App extends Component {
    */
   onGetTwilight = () => {
     this.setState({ loading: true });
-    navigator.geolocation.getCurrentPosition(
-      ({coords}) => {
-        const { latitude, longitude } = coords;
-        getTwilight(latitude, longitude).then(twilight => this.setState({
-          twilight,
-          loading: false,
-        }));
-        storeData = async () => {
-          try {
-            console.log("saving to store", JSON.stringify(this.state));
-            await AsyncStorage.setItem('CG_state', JSON.stringify(this.state))
-          } catch (e) {
-            Alert.alert(e.message);
-          }
-        }
-        storeData();
-      },
-      error => Alert.alert(error.message),
-      { enableHighAccuracy: false, timeout: 20000, maximumAge: 100000 }, 
-    );
+    getPosition().then(({ coords }) => {
+      const { latitude, longitude } = coords;
+      getTwilight(latitude, longitude).then(twilight => this.setState({
+        twilight,
+        loading: false,
+      }));
+      setAsyncData(this.state);
+    }).catch(e => Alert.alert(e.message));
   }
+
+  setTimeBeforeTwilight = timeBeforeTwilight => this.setState({timeBeforeTwilight});
 
   render() {
     const { loading, twilight, timeBeforeTwilight } = this.state;
@@ -93,14 +55,14 @@ export default class App extends Component {
             style={styles.image}
             source={require('./assets/chicken.png')}
           />
-          <Text style={{fontSize: 35}}>Chicken Guard</Text>
+          <Text style={{ fontSize: 35 }}>Chicken Guard</Text>
         </View>
         <>
           {loading ? (
             <ActivityIndicator size="large" color="#0000ff" />
           ) : (
             <>
-              <Text style={{fontSize: 20, marginBottom: 20}}>{`Today's twilight is ${twilight.getUTCHours()}:${twilight.getUTCMinutes()}`}</Text>
+              <Text style={{ fontSize: 20, marginBottom: 20 }}>{`Today's twilight is ${twilight.getUTCHours()}:${twilight.getUTCMinutes()}`}</Text>
               <Button
                 onPress={this.onGetTwilight}
                 title="Reload twilight"
@@ -110,12 +72,12 @@ export default class App extends Component {
             </>
           )}
           <Slider
-            style={{width: "100%"}}
+            style={{ width: '100%' }}
             value={timeBeforeTwilight}
             minimumValue={0}
             maximumValue={90}
             step={15}
-            onValueChange={value => this.setState({timeBeforeTwilight: value})}
+            onValueChange={this.setTimeBeforeTwilight}
           />
           <Text>{`${timeBeforeTwilight} min.`}</Text>
         </>
